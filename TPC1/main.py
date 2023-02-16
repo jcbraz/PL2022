@@ -2,10 +2,11 @@ from prettytable import PrettyTable
 import matplotlib.pyplot as plt
 plt.style.use('_mpl-gallery')
 
+
 def parseFile(filename: str):
     content = open(filename, "r")
     headers = content.readline().strip().split(",")
-    
+
     structure = []
 
     for line in content:
@@ -20,10 +21,11 @@ def parseFile(filename: str):
 
     return structure
 
+
 def sexDistribution(dataStructure: list[object]):
 
     genders = {'Male': 0, 'Female': 0}
- 
+
     for dataSet in dataStructure:
         if dataSet.get('temDoença', 'Property not found') == '1':
             if dataSet['sexo'] == 'M':
@@ -43,19 +45,16 @@ def ageSicknessDistribution(dataStructure):
 
     maxAge = max(ages)
 
-    #  The 0 format specifier means "format the value as an integer and pad it with zeros if necessary to fill at least one character". In this case, it has the effect of setting the initial value of the dictionary to 0, as desired.
-    ageIntervals = {f"{i}-{i+4}": 0 for i in range(30,maxAge,4)}
+    ageIntervals = {f"{i}-{i+4}": 0 for i in range(30, maxAge, 4)}
 
-    for age in ages:
+    for dataSet in dataStructure:
+        age = int(dataSet['idade'])
         if age < 0:
             break
         for interval in ageIntervals:
             start, end = map(int, interval.split("-"))
-            if start <= age <= end:
+            if start <= age <= end and dataSet['temDoença'] == '1':
                 ageIntervals[interval] += 1
-
-    # for interval, count in ageIntervals.items():
-    #     print(f"{interval}: {count}")
 
     return ageIntervals
 
@@ -68,20 +67,19 @@ def cholesterolDistribution(dataStructure):
     minValue = min(cholesterolValues)
     maxValue = max(cholesterolValues)
 
-    valueIntervals = {f"{i}-{i+10}": 0 for i in range(minValue,maxValue,10)}
+    valueIntervals = {f"{i}-{i+10}": 0 for i in range(minValue, maxValue, 10)}
 
-    for value in cholesterolValues:
+    for dataSet in dataStructure:
+        value = int(dataSet['colesterol'])
         if value < 0:
             break
         for interval in valueIntervals:
             start, end = map(int, interval.split("-"))
-            if start <= value <= end:
+            if start <= value <= end and dataSet['temDoença'] == '1':
                 valueIntervals[interval] += 1
 
-    # for interval, count in valueIntervals.items():
-    #     print(f"{interval}: {count}")
-
     return valueIntervals
+
 
 def makeDistributionTable(dic: dict, subject: str):
 
@@ -90,8 +88,8 @@ def makeDistributionTable(dic: dict, subject: str):
     for interval, count in dic.items():
         table.add_row([interval, count])
 
-    # print(table)
     return table
+
 
 def makeDistributionGraph(dic: dict, subject: str):
 
@@ -103,6 +101,51 @@ def makeDistributionGraph(dic: dict, subject: str):
     plt.show()
 
 
-# print(sexDistribution(parseFile("myheart.csv")))
-# print(ageSicknessDistribution(parseFile("myheart.csv")))
-print(makeDistributionGraph(ageSicknessDistribution(parseFile("myheart.csv")), "Age"))
+def selectDistributions(data, viewModel: int):
+    valueSelected = 1
+    subject: str
+    while (valueSelected != 0):
+        valueSelected = int(input(
+            "Select the distribution:\n1 - Disease distribution by sex\n2 - Disease distribution by age\n3 - Disease distribution by cholesterol\n"))
+        if valueSelected != 0:
+            if valueSelected == 1:
+                subject = "Sex"
+                if viewModel == 1:
+                    print(makeDistributionTable(sexDistribution(data),subject))
+                    break
+                else:
+                    print(makeDistributionGraph(sexDistribution(data),subject))
+                    break
+            elif valueSelected == 2:
+                subject = "Age"
+                if viewModel == 1:
+                    print(makeDistributionTable(ageSicknessDistribution(data),subject))
+                    break
+                else:
+                    print(makeDistributionGraph(ageSicknessDistribution(data),subject))
+                    break
+            elif valueSelected == 3:
+                subject = "Cholesterol"
+                if viewModel == 1:
+                    print(makeDistributionTable(cholesterolDistribution(data),subject))
+                    break
+                else:
+                    print(makeDistributionGraph(cholesterolDistribution(data),subject))
+                    break
+            else:
+                print("Something went wrong")
+                break
+
+
+def main():
+    data = parseFile("myheart.csv")
+    tableOrGraph = 0
+    while (tableOrGraph != 1 and tableOrGraph != 2):
+        tableOrGraph = int(
+            input("Choose the mode to visualize the data:\n1 - Table\n2 - Graph\n"))
+
+    selectDistributions(data, tableOrGraph)
+
+
+main()
+
