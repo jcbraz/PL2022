@@ -83,7 +83,7 @@ def cholesterolDistribution(dataStructure):
 
 def makeDistributionTable(dic: dict, subject: str):
 
-    table = PrettyTable(["Interval", subject])
+    table = PrettyTable([subject, "Disease presence"])
 
     for interval, count in dic.items():
         table.add_row([interval, count])
@@ -148,4 +148,3 @@ def main():
 
 
 main()
-
