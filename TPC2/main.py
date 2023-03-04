@@ -24,7 +24,6 @@ def readSequence():
 
 
 def main():
-
     print(readSequence())
 
 
