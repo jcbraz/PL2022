@@ -53,22 +53,23 @@ class EmChamada(State):
 
 
 def format_balance(balance: float):
-    tmp_balance = str(balance).split('.')
-    if len(tmp_balance) == 1:
-        formatted_balance = tmp_balance[0] + "e00c"
-    elif len(tmp_balance[1]) == 1:
-        formatted_balance = tmp_balance[0] + "e0" + tmp_balance[1] + "c"
-    else:
-        formatted_balance = tmp_balance[0] + "e" + tmp_balance[1][:2] + "c"
 
+    balance = round(balance, 2)
+    balance_str = str(balance)
+    
+    first_digit = balance_str[0]
+    decimal_pos = balance_str.find('.')
+    decimals = balance_str[decimal_pos + 1:]
+
+    formatted_balance = f'{first_digit}e{decimals}c'
     return formatted_balance
 
 
 def coin_handling(regular_expression, balance: float):
 
     coin_section = regular_expression.group(1)
-    coin_pattern = re.compile(r'(\d+(?:c|e))')
-    coins = coin_pattern.findall(coin_section)
+    coin_value_pattern = re.compile(r'(\d+(?:c|e))')
+    coins = coin_value_pattern.findall(coin_section)
 
     if not coins:
         raise Exception("maq: Sequência de moedas inválida!\n")
@@ -87,6 +88,7 @@ def coin_handling(regular_expression, balance: float):
     final_balance = balance
     invalid_coin = None
     for coin in coins:
+        print(coin)
         if coin not in coin_values:
             invalid_coin = coin
         else:
@@ -124,7 +126,7 @@ def number_handling(regular_expression, balance: float):
 
     resulting_call_price = call_prices[prefix]
     if balance < resulting_call_price:
-        raise Exception('maq: Saldo Insuficiente!\n')
+        raise Exception('Saldo Insuficiente! Introduza mais moedas\n')
 
     return resulting_call_price
 
@@ -134,21 +136,22 @@ def main():
     coin_pattern = re.compile(r"MOEDA\s+((\d+(?:c|e)(?:,\s*)?)*)")
     phone_pattern = re.compile(r"T=(\d{9}|00\d+)")
 
-    command = input()
+    active_command = input()
     flag = False
-    while command.lower() != 'levantar':
-        if command.lower() == 'abortar':
+    while active_command.lower() != 'levantar':
+        if active_command.lower() == 'abortar':
             print('maq: Operação abortada. Volte sempre!')
             flag = True
             break
         print(
             'maq: O telefone está inactivo. Levante o telefone antes de executar qualquer comando')
-        command = input()
+        active_command = input()
 
     if not flag:
 
         if active_command.lower() == 'pousar' or active_command.lower() == 'abortar':
             phone.hangup()
+            flag = True
 
         phone = Ativo()
         active_command = input('maq: Introduza moedas\n')
@@ -164,8 +167,6 @@ def main():
                     print(f'maq: saldo = {formatted_balance}\n')
                 except Exception as e:
                     print("maq:", e)
-            else:
-                print('maq: Sequência de moedas inválida!\n')
 
             active_command = input('maq: Introduza o número de telefone\n')
 
@@ -181,8 +182,6 @@ def main():
                         f'maq: Chamada em curso...\n saldo disponível = {format_balance(phone.get_balance())}')
                 except Exception as e:
                     print("maq:", e)
-            else:
-                print('maq: Número inserido inválido!\n')
 
             active_command = input()
 
