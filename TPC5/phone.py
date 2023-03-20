@@ -1,20 +1,7 @@
 import re
 
-
 class State:
-    def __init__(self):
-        self.isActive = False
-        self.balance = 0
-
-    def __init__(self, isActive: bool):
-        self.isActive = isActive
-        self.balance = 0
-
-    def __init__(self, balance: float):
-        self.isActive = True
-        self.balance = balance
-
-    def __init__(self, isActive: bool, balance: float):
+    def __init__(self, isActive=True, balance=0.0):
         self.isActive = isActive
         self.balance = balance
 
@@ -26,21 +13,19 @@ class State:
 
 
 class Ativo(State):
-
     def __init__(self):
-        super().__init__(True, 0)
+        super().__init__(True, 0.0)
 
     def add_balance(self, balance: float):
-        self.balance = balance
+        self.balance += balance
 
     def hangup(self):
         self.isActive = False
 
 
 class EmChamada(State):
-
     def __init__(self, balance: float):
-        super().__init__(self, balance)
+        super().__init__(True, balance)
 
     def __init__(self, ativo: Ativo):
         super().__init__(ativo.get_isActive(), ativo.get_balance())
@@ -50,26 +35,25 @@ class EmChamada(State):
 
     def hangup(self):
         self.isActive = False
-
+    
 
 def format_balance(balance: float):
 
     balance = round(balance, 2)
     balance_str = str(balance)
-    
+
     first_digit = balance_str[0]
     decimal_pos = balance_str.find('.')
     decimals = balance_str[decimal_pos + 1:]
-
     formatted_balance = f'{first_digit}e{decimals}c'
+
     return formatted_balance
 
+def coin_handling(coin_sequence: str, balance: float):
 
-def coin_handling(regular_expression, balance: float):
-
-    coin_section = regular_expression.group(1)
     coin_value_pattern = re.compile(r'(\d+(?:c|e))')
-    coins = coin_value_pattern.findall(coin_section)
+    coins = re.findall(coin_value_pattern, coin_sequence)
+    
 
     if not coins:
         raise Exception("maq: Sequência de moedas inválida!\n")
@@ -137,7 +121,6 @@ def main():
     phone_pattern = re.compile(r"T=(\d{9}|00\d+)")
 
     active_command = input()
-    flag = False
     while active_command.lower() != 'levantar':
         if active_command.lower() == 'abortar':
             print('maq: Operação abortada. Volte sempre!')
@@ -147,26 +130,23 @@ def main():
             'maq: O telefone está inactivo. Levante o telefone antes de executar qualquer comando')
         active_command = input()
 
-    if not flag:
+    phone = Ativo()
+    active_command = input('maq: Introduza moedas\n')
+
+    while True:
 
         if active_command.lower() == 'pousar' or active_command.lower() == 'abortar':
-            phone.hangup()
-            flag = True
-
-        phone = Ativo()
-        active_command = input('maq: Introduza moedas\n')
-
-        while phone.get_isActive() is True:
-
-            coin_matching = re.match(coin_pattern, active_command)
-            if coin_matching:
-                try:
-                    balance, formatted_balance = coin_handling(
-                        coin_matching, phone.get_balance())
-                    phone.add_balance(balance)
-                    print(f'maq: saldo = {formatted_balance}\n')
-                except Exception as e:
-                    print("maq:", e)
+            break
+            
+        coin_matching = re.match(coin_pattern, active_command)
+        if coin_matching:
+            try:
+                balance, formatted_balance = coin_handling(
+                    active_command, phone.get_balance())
+                phone.add_balance(balance)
+                print(f'maq: saldo = {formatted_balance}\n')
+            except Exception as e:
+                print("maq:", e)
 
             active_command = input('maq: Introduza o número de telefone\n')
 
@@ -185,7 +165,78 @@ def main():
 
             active_command = input()
 
-        print(f"troco={phone.get_balance()}; Volte sempre!")
+    print(f"troco={format_balance(phone.get_balance())}; Volte sempre!")
 
 
 main()
+
+# extra
+# def structure_exchange(formatted_balance: str) -> str:
+
+#     exchange = []
+#     coin_num = 0
+#     euros = int(format_balance[0])
+#     cent_index = formatted_balance.find('c')
+#     if formatted_balance[cent_index - 2] == 'e':
+#         cents = int(formatted_balance[cent_index - 1])
+#     else:
+#         first_cents_num = formatted_balance[cent_index - 2]
+#         second_cents_num = formatted_balance[cent_index - 1]
+#         cents = int(first_cents_num.join(second_cents_num))
+
+#     if euros % 2 == 0:
+#         coin_num = euros/2
+#         exchange.append(f'{coin_num}x2e')
+#     else:
+#         if euros != 1:
+#             coin_num = euros-1/2
+#             exchange.append(f'{coin_num}x2')
+#             exchange.append('1x1e')
+#         else:
+#             exchange.append('1x1e')
+
+#     if cents % 2 == 0:
+#         if cents < 20:
+#             exchange.append('1x10c')
+#         else:
+#             rest_cents = cents/20
+#             coin_num = cents // 20
+#             if not rest_cents.is_integer():
+#                 exchange.append(f'{coin_num}x20c')
+#                 exchange.append('1x10c')
+#             else:
+#                 exchange.append(f'{rest_cents}x20c')
+#     else:
+#         if cents % 5 == 0:
+#             if cents < 20:
+#                 exchange.append('1x10c')
+#             else:
+#                 rest_cents = cents/20
+#                 coin_num = cents // 20
+#                 if not rest_cents.is_integer():
+#                     exchange.append(f'{coin_num}x20c')
+#                     exchange.append('1x10c')
+#                     exchange.append('1x5c')
+#                 else:
+#                     exchange.append(f'{rest_cents}x20c')
+#                     exchange.append('1x5c')
+            
+
+#     return exchange
+
+
+# def handle_cents(cents: float, num_to_verify: int) -> list:
+
+#     exchange = []
+
+#     if cents % num == 0:
+#         if cents < 20:
+#             exchange.append('1x10c')
+#         else:
+#             rest_cents = cents/20
+#             coin_num = cents // 20
+#             if not rest_cents.is_integer():
+#                 exchange.append(f'{coin_num}x20c')
+#                 exchange.append('1x10c')
+#             else:
+#                 exchange.append(f'{rest_cents}x20c')
